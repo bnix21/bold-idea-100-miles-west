@@ -35,6 +35,43 @@
         
         var wh_HORIZONTAL_UNIT = 10;
         var wh_VERTICAL_UNIT = 30;
+        
+        var zombieHeight = 7;
+        var zombieFriction = 0.5;
+        var zombieRestitution = 0.1;
+        
+        var zombieMaterial = Physijs.createMaterial(new THREE.MeshNormalMaterial({ transparent: true, wireframe: true, wireframeLinewidth : 0, opacity: 0 }),
+                            zombieFriction,
+                            zombieRestitution);
+        
+        var bulletSpeed = 100; //0;
+        var bulletMass = .15;
+        var bullet_size = 0.5;//5;
+        
+        var bulletGeometry = new THREE.SphereGeometry(bullet_size, 16, 16);
+        
+        var bulletMaterial = new Physijs.createMaterial(new THREE.MeshPhongMaterial({
+                        ambient: 0x000000,
+                        color: 0xbcc6cc,
+                        shininess: 100.0,
+                        emissive: 0x111111,
+                        specular: 0xbcc6cc,
+                        metal: true
+                    }),
+                    0.4,
+                    0.4);
+
+var bullet = new Physijs.ConvexMesh(bulletGeometry, bulletMaterial,bulletMass);
+
+            // Enable CCD if the object moves more than 1 meter in one simulation frame
+            bullet.setCcdMotionThreshold(1);
+
+            // Set the radius of the embedded sphere such that it is smaller than the object
+            bullet.setCcdSweptSphereRadius(0.2);
+
+            bullet.type = 'bullet';
+            bullet.alive = true;
+            bullet.castShadow = true;
 
         var brickTexture = THREE.ImageUtils.loadTexture('textures/brick.jpg');
         brickTexture.wrapS = brickTexture.wrapT = THREE.RepeatWrapping;
@@ -155,7 +192,7 @@ var     floorTexture = THREE.ImageUtils.loadTexture('textures/floor.jpg');
         var moveBackward = false;
         var moveLeft = false;
         var moveRight = false;
-        var canJump = false;
+        var canJump = true;
         isShooting = false;
         var prevTime = performance.now();
         var velocity = new THREE.Vector3();
@@ -195,18 +232,16 @@ var     floorTexture = THREE.ImageUtils.loadTexture('textures/floor.jpg');
             //     scoreboard.message("Game Over!");
             //     game_over = true;
             // });
+            
+            
 
 
             function addZombie(zhealth, zspeed, zxposition, zyposition) {
                 var loader = new THREE.ObjectLoader();
                 loader.load('models/gears-of-war-3-lambent-female.json',
                     function(obj) {
-                        var zombieHeight = 6;
-                        var zombieFriction = 0.5;
-                        var zombieRestitution = 0.1;
-                        var zombieMaterial = Physijs.createMaterial(new THREE.MeshNormalMaterial({ transparent: true, wireframe: true, wireframeLinewidth : 0, opacity: 0 }),
-                            zombieFriction,
-                            zombieRestitution);
+                        
+                        
                         var zombie = new Physijs.CapsuleMesh(new THREE.CylinderGeometry(1, 1, zombieHeight),
                             zombieMaterial,
                             1);
@@ -267,8 +302,6 @@ var     floorTexture = THREE.ImageUtils.loadTexture('textures/floor.jpg');
 
             //[zhealth, zspeed, zxposition, zyposition]
             var zombieTraits = [
-                [100, 15, 23, 23],
-                [100, 15, 40, 40],
                 [100, 15, 50, 30],
                 [100, 15, 45, 20],
                 [100, 15, 60, 70],
@@ -286,7 +319,7 @@ var     floorTexture = THREE.ImageUtils.loadTexture('textures/floor.jpg');
                 [100, 15, 809, 900],
                 [100, 15, 103, 503],
                 [100, 15, 605, 501],
-                [100, 15, 67, 4005]
+                [150, 20, 67, 4005]
             ];
 
             for (var j = 0; j < zombieTraits.length; j++) {
@@ -315,8 +348,8 @@ var     floorTexture = THREE.ImageUtils.loadTexture('textures/floor.jpg');
                 1);
 
             player.visible = true; //false; // FPS
-            player.position.x = 30;
-            player.position.z = 30;
+            player.position.x = 500;
+            player.position.z = 500;
             player.position.y = playerHeight / 2 + 2;
             //player.rotation.y = -Math.PI / 2;
             player.type = 'player';
@@ -361,17 +394,15 @@ var     floorTexture = THREE.ImageUtils.loadTexture('textures/floor.jpg');
                         moveBackward = true;
                         break;
                     case 39: // right
-                    case 68: // d
+                    case 68: // 
                         moveRight = true;
                         break;
                     case 32: // space
-                        //if (canJump === true) //playerVelocity.y += 3;
-                        //canJump = false;
-                        //isShooting = true;
+                        if (canJump === true) //playerVelocity.y += 3;
+                        canJump = false;
+                        isShooting = true;
 
-                        var bulletSpeed = 100; //0;
-                        var bulletSize = 5;
-                        var bulletMass = .15;
+                       
 
                         var aimVector = new THREE.Vector3();
                         camera.getWorldDirection(aimVector);
@@ -379,9 +410,12 @@ var     floorTexture = THREE.ImageUtils.loadTexture('textures/floor.jpg');
                         fireBullet(new THREE.Vector3(bulletSpeed * aimVector.x,
                                 bulletSpeed * aimVector.y,
                                 bulletSpeed * aimVector.z,
-                                bulletSize),
-                            bulletMass);
+                                bullet_size));
 
+                        break;
+                    case 16: //shift
+                        var force = new THREE.Vector3(0, 5, 0);
+                        player.applyCentralImpulse(force);
                         break;
                 }
                 
@@ -891,31 +925,12 @@ var     floorTexture = THREE.ImageUtils.loadTexture('textures/floor.jpg');
                 //}
             }
         }
+        
+        
 
         /////// Bullets added April 6th
-        function fireBullet(bullet_direction, bullet_size, bullet_mass) {
-            var bullet = new Physijs.ConvexMesh(new THREE.SphereGeometry(bullet_size, 16, 16),
-                Physijs.createMaterial(new THREE.MeshPhongMaterial({
-                        ambient: 0x000000,
-                        color: 0xbcc6cc,
-                        shininess: 100.0,
-                        emissive: 0x111111,
-                        specular: 0xbcc6cc,
-                        metal: true
-                    }),
-                    0.4,
-                    0.4),
-                bullet_mass);
-
-            // Enable CCD if the object moves more than 1 meter in one simulation frame
-            bullet.setCcdMotionThreshold(1);
-
-            // Set the radius of the embedded sphere such that it is smaller than the object
-            bullet.setCcdSweptSphereRadius(0.2);
-
-            bullet.type = 'bullet';
-            bullet.alive = true;
-            bullet.castShadow = true;
+        function fireBullet(bullet_direction) {
+            
             scene.add(bullet);
             bullets.push(bullet);
 
@@ -934,3 +949,10 @@ var     floorTexture = THREE.ImageUtils.loadTexture('textures/floor.jpg');
 </body>
 
 </html>
+
+
+                    
+0 0       (O)     O
+ u         u     C|\    
+----     _/ \_   / \
+                      
