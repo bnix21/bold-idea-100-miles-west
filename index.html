@@ -273,7 +273,6 @@
   }
 
   function addZombie(zhealth, zspeed, zxposition, zyposition, callback) {
-    //obj.scale(2, 2, 2);
     objectLoader.load('./models/zombie/gears-of-war-3-lambent-female.json', function (obj){
       var zombie = new Physijs.CapsuleMesh(new THREE.CylinderGeometry(1, 1, zombieHeight),
         zombieMaterial,
@@ -331,11 +330,10 @@
       playerMaterial,
       1);
 
-    player.visible = true; //false; // FPS
+    player.visible = true; 
     player.position.x = 500;
     player.position.z = 500;
     player.position.y = playerHeight / 2 + 2;
-    //player.rotation.y = -Math.PI / 2;
     player.type = 'player';
     player.Health = 100;
     player.canShoot = 0;
@@ -344,8 +342,6 @@
 
     // Setup the camera
     camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 1, 1000);
-
-    //player.rotation.y = Math.PI / 2;
 
     // Setup lighting
     var light = new THREE.HemisphereLight(0xeeeeff, 0x777788, 0.75);
@@ -400,8 +396,6 @@
 
           break;
       }
-
-      //player.setLinearVelocity(playerVelocity);
     };
 
     var onKeyUp = function (event) {
@@ -422,9 +416,6 @@
         case 68: // d
           moveRight = false;
           break;
-        case 32: // space
-        //isShooting = false;
-        //break;
         case 16:
           canJump = true;
           break;
