@@ -20,11 +20,8 @@
 <!-- Include other libraries here (keep three.js at the top): -->
 <script src="js/Three.js"></script>
 <script src="js/PointerLockControls.js"></script>
-<!--<script src="js/Enemy.js"></script>-->
 <script src="js/Scoreboard.js"></script>
 <script src="js/physi.js"></script>
-<!--<script src="js/ColladaLoader.js"></script>-->
-<!--<script src="models/zombie/zombie.js"></script>-->
 
 <script>
   Physijs.scripts.worker = 'js/physijs_worker.js';
@@ -52,9 +49,9 @@
     zombieFriction,
     zombieRestitution);
 
-  var bulletSpeed = 100; //0;
+  var bulletSpeed = 100;
   var bulletMass = .15;
-  var bullet_size = 0.5;//5;
+  var bullet_size = 0.5;
 
   var bulletGeometry = new THREE.SphereGeometry(bullet_size, 16, 16);
 
@@ -129,7 +126,6 @@
   var geoBack = new THREE.CubeGeometry(HORIZONTAL_UNIT, wh_VERTICAL_UNIT, 2);
   var geoSide = new THREE.CubeGeometry(2, wh_VERTICAL_UNIT, HORIZONTAL_UNIT);
   var geoFront = new THREE.CubeGeometry(HORIZONTAL_UNIT * 0.45, wh_VERTICAL_UNIT, 2);
-  // var geo1 = = new THREE.CubeGeometry(HORIZONTAL_UNIT,wh_VERTICAL_UNIT, 2)
 
   var bullets = [];
   var zombies = [];
@@ -201,8 +197,6 @@
   var moveLeft = false;
   var moveRight = false;
   var canJump = true;
-  isShooting = false;
-
 
   function generateRandomNumber(max) {
     return Math.floor(Math.random() * Math.floor(max));
@@ -224,7 +218,6 @@
           zombies.splice(index, 1);
           scoreboard.setMessage("There are " + zombies.length + " zombies still remaining");
         }
-// ar
       }
 
       if (zombies.length === 0) {
@@ -233,10 +226,6 @@
     }
 
     if (other_object.type === 'player') {
-      //TODO: Decide whether or not we die as soon as we get touched
-      //by a zombie or if the player is allowed a certain amount of health
-      //that decreases when we collide and/or touch.
-
       other_object.Health -= 10;
       var healthbar = document.getElementById("health");
       healthbar.value = other_object.Health;
@@ -281,8 +270,6 @@
         }
       });
     }
-
-
   }
 
   function addZombie(zhealth, zspeed, zxposition, zyposition, callback) {
@@ -309,6 +296,7 @@
 
       zombies.push(zombie);
 
+      // This lets our program know this the zombie is loaded
       callback();
     });
   }
@@ -333,7 +321,7 @@
 
     // Setup our player.  Use CapsuleMesh so it can have more
     // realistic human-like movement
-    playerHeight = 6;
+    var playerHeight = 6;
     var playerFriction = 0.8;
     var playerRestitution = 1;
     var playerMaterial = Physijs.createMaterial(new THREE.MeshNormalMaterial(),
@@ -394,9 +382,6 @@
           moveRight = true;
           break;
         case 32: // space
-          isShooting = true;
-
-
           var aimVector = new THREE.Vector3();
           camera.getWorldDirection(aimVector);
 
@@ -409,7 +394,7 @@
         case 16: //shift
           if (canJump === true) {
             canJump = false;
-            var force = new THREE.Vector3(0, 5, 0);
+            var force = new THREE.Vector3(0, 15, 0);
             player.applyCentralImpulse(force);
           }
 
@@ -447,42 +432,19 @@
     };
 
     var onMouseDown = function () {
-      //             shoot = true;
+      var aimVector = new THREE.Vector3();
+      camera.getWorldDirection(aimVector);
 
-      //             var vector = new THREE.Vector3(0,0,1);
-      //             projector.unprojectVector(vector, camera);
-      //             var ray = new THREE.Ray(camera.position, vector.sub(camera.position).normalize() );
-      //             vector.copy(ray.direction);
-
-      // // Creates a ball and throws it
-      // var ballMass = 35;
-      // var ballRadius = 4;
-
-      // var ball = new Physijs.SphereMesh(new THREE.SphereGeometry( ballRadius, 14, 10 ), ballMaterial, ballMass );
-      // ball.castShadow = true;
-      // ball.receiveShadow = true;
-
-      // scene.add(ball);
-
-      // //var ballShape = new Ammo.btSphereShape( ballRadius );
-      // //ballShape.setMargin( margin );
-      // //pos.copy( raycaster.ray.direction );
-      // //pos.add( raycaster.ray.origin );
-      // //quat.set( 0, 0, 0, 1 );
-      // //var ballBody = createRigidBody( ball, ballShape, ballMass, pos, quat );
-
-      // //pos.copy( raycaster.ray.direction );
-      // //pos.multiplyScalar( 240 );
-      // vector.z = -vector.z;
-      // ball.setLinearVelocity(vector); //new THREE.Vector3( pos.x, pos.y, pos.z ) );
+      fireBullet(new THREE.Vector3(bulletSpeed * aimVector.x,
+        bulletSpeed * aimVector.y,
+        bulletSpeed * aimVector.z,
+        bullet_size));
     };
 
 
     window.addEventListener('mousedown', onMouseDown, false);
     document.addEventListener('keydown', onKeyDown, false);
     document.addEventListener('keyup', onKeyUp, false);
-
-    raycaster = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(0, -1, 0), 0, 10);
 
     //****begin world creation****
 
@@ -521,7 +483,6 @@
       }
     }
 
-
     function addObject(type, row, col) {
       var z = (row + 1) * HORIZONTAL_UNIT - ZSIZE * 0.5,
         x = (col + 1) * HORIZONTAL_UNIT - XSIZE * 0.5;
@@ -555,17 +516,12 @@
         scene.add(geo);
       }
       else if (type === 'B') {
-        //geo = new THREE.CubeGeometry(HORIZONTAL_UNIT, VERTICAL_UNIT, HORIZONTAL_UNIT);
-
         geo = new Physijs.BoxMesh(
           tallGeometry,
           brickMesh,
           0
         );
 
-
-        /*material =
-        mesh = new THREE.Mesh(geo, material);*/
         geo.position.set(x, VERTICAL_UNIT * 0.5, z);
         scene.add(geo);
       }
@@ -576,68 +532,45 @@
           0
         );
 
-
-        /*material =
-        mesh = new THREE.Mesh(geo, material);*/
         geo.position.set(x, VERTICAL_UNIT * 0.5, z);
         scene.add(geo);
       }
 
       else if (type === 'S') {
-        //geo = new THREE.CubeGeometry(HORIZONTAL_UNIT, VERTICAL_UNIT, HORIZONTAL_UNIT);
-
-
         geo = new Physijs.BoxMesh(
           groundGeometry,
           streetMesh,
           0
         );
 
-
-        /*material =
-        mesh = new THREE.Mesh(geo, material);*/
-        geo.position.set(x, VERTICAL_UNIT * 0, z);
+        geo.position.set(x, 0, z);
         scene.add(geo);
       }
 
 
       else if (type === 's') {
-        //geo = new THREE.CubeGeometry(HORIZONTAL_UNIT, VERTICAL_UNIT, HORIZONTAL_UNIT);
-
-
         geo = new Physijs.BoxMesh(
           groundGeometry,
           streetTurnedMesh,
           0
         );
 
-
-        /*material =
-        mesh = new THREE.Mesh(geo, material);*/
         geo.position.set(x, 0, z);
         scene.add(geo);
       }
 
       else if (type === 'p') {
-        //geo = new THREE.CubeGeometry(HORIZONTAL_UNIT, VERTICAL_UNIT, HORIZONTAL_UNIT);
-
-
         geo = new Physijs.BoxMesh(
           groundGeometry,
           grassMesh,
           0
         );
 
-
-        /*material =
-        mesh = new THREE.Mesh(geo, material);*/
         geo.position.set(x, 0, z);
         scene.add(geo);
       }
 
       else if (type === 'y') {
-        //geo = new THREE.CubeGeometry(HORIZONTAL_UNIT, VERTICAL_UNIT, HORIZONTAL_UNIT);
-
         var back = new Physijs.BoxMesh(
           geoBack,
           OOFMesh,
@@ -676,9 +609,6 @@
           groundGeometry,
           OOFMesh, 0);
 
-
-        /*material =
-        mesh = new THREE.Mesh(geo, material);*/
         leftside.position.set(x - 50, wh_VERTICAL_UNIT * 0.5, z);
         rightside.position.set(x + 50, wh_VERTICAL_UNIT * 0.5, z);
         back.position.set(x, wh_VERTICAL_UNIT * 0.5, z - 50);
@@ -702,26 +632,17 @@
         scene.add(floor);
         scene.add(ceiling);
       }
-
-
       else if (type === 'w') {
-        //geo = new THREE.CubeGeometry(HORIZONTAL_UNIT, VERTICAL_UNIT, HORIZONTAL_UNIT);
-
         geo = new Physijs.BoxMesh(
           yGeometry,
           whMesh,
           0
         );
 
-
-        /*material =
-        mesh = new THREE.Mesh(geo, material);*/
         geo.position.set(x, wh_VERTICAL_UNIT * 0.5, z);
         scene.add(geo);
       }
     }
-
-
     //****end world creation****
 
     renderer = new THREE.WebGLRenderer();
@@ -760,9 +681,7 @@
       }
 
       setTimeout( function() {
-
         requestAnimationFrame( animate );
-
       }, 1000 / 30 );
 
       renderer.render(scene, camera);
@@ -834,10 +753,6 @@
 
         // set a flag to indicate that our player is moving
         player.isMoving = true;
-
-        //var cameraLookingAtVector = new THREE.Vector3(); // create once and reuse it!
-        //camera.getWorldDirection(cameraLookingAtVector);
-        //player.lookAt(cameraLookingAtVector);
       }
       else {
         // if no keys were pressed, but player is still moving, slow the player down to a halt.
@@ -848,18 +763,12 @@
           player.isMoving = false;
         }
       }
-
-      //var lookWhereCameraIsLooking = new THREE.Vector3();
-      //camera.getWorldDirection(lookWhereCameraIsLooking);
-      //player.lookAt(lookWhereCameraIsLooking);
     }
   }
 
   function controlZombie() {
     if (controlsEnabled === true) // && zombie)
     {
-      //if (zombie.position.y < 4) // && zombie.Health > 0) // Wait for the zombie to settle into place
-      //{
       for (var index = 0; index < zombies.length; index += 1) {
         if (zombies[index] === undefined) continue;
         {
@@ -884,10 +793,8 @@
           }
         }
       }
-      //}
     }
   }
-
 
   /////// Bullets added April 6th
   function fireBullet(bullet_direction) {
